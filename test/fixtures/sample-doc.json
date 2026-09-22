@@ -1,0 +1,17 @@
+{
+  "title": "Boys Cleats FAQs",
+  "body": {
+    "content": [
+      { "paragraph": { "elements": [{ "textRun": { "content": "PLP Type: L2\n" } }] } },
+      { "paragraph": { "elements": [{ "textRun": { "content": "PLP URL: https://www.academy.com/c/kids/boys-cleats?campaign=test\n" } }] } },
+      { "paragraph": { "elements": [{ "textRun": { "content": "Category ID: 12345\n" } }] } },
+      { "paragraph": { "paragraphStyle": { "namedStyleType": "HEADING_1" }, "elements": [{ "textRun": { "content": "How do I choose cleats?\n" } }] } },
+      { "paragraph": { "elements": [{ "textRun": { "content": "Start with " } }, { "textRun": { "content": "the right fit", "textStyle": { "bold": true } } }, { "textRun": { "content": ".\n" } }] } },
+      { "paragraph": { "bullet": { "listId": "list1", "nestingLevel": 0 }, "elements": [{ "textRun": { "content": "Check the surface.\n" } }] } },
+      { "paragraph": { "bullet": { "listId": "list1", "nestingLevel": 0 }, "elements": [{ "textRun": { "content": "Try them on.\n" } }] } },
+      { "paragraph": { "paragraphStyle": { "namedStyleType": "HEADING_2" }, "elements": [{ "textRun": { "content": "Fit details\n" } }] } },
+      { "paragraph": { "elements": [{ "textRun": { "content": "Read our guide", "textStyle": { "link": { "url": "https://www.academy.com/c/guide" } } } }, { "textRun": { "content": ".\n" } }] } }
+    ]
+  },
+  "lists": { "list1": { "listProperties": { "nestingLevels": [{ "glyphType": "BULLET" }] } } }
+}

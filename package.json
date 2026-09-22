@@ -1,0 +1,13 @@
+{
+  "name": "academy-plp-prefooter-importer",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test",
+    "import": "node scripts/import.js"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

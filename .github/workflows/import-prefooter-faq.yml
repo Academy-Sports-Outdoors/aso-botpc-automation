@@ -1,0 +1,94 @@
+name: Import PLP Pre Footer FAQ
+
+on:
+  workflow_dispatch:
+    inputs:
+      doc_url:
+        description: Google Doc URL or ID
+        required: true
+        type: string
+      dry_run:
+        description: Preview only (no Contentstack writes)
+        required: true
+        default: true
+        type: boolean
+      publish:
+        description: Publish entries after import
+        required: true
+        default: false
+        type: boolean
+      contentstack_environment:
+        description: Contentstack publish environment name or UID (required only when publishing)
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    # Match web-builder: the actor's GitHub Environment owns their CMA session token.
+    # This is separate from the Contentstack publish environment input above.
+    environment: ${{ github.actor }}
+    concurrency:
+      group: plp-prefooter-import
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - name: Check GitHub secrets
+        env:
+          CS_API_KEY: ${{ secrets.CS_API_KEY }}
+          CS_AUTHTOKEN: ${{ secrets.CS_AUTHTOKEN }}
+          GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON || secrets.GOOGLE_CREDENTIALS }}
+        run: |
+          set -euo pipefail
+          if [[ -z "$CS_API_KEY" ]]; then
+            echo "::error::Missing CS_API_KEY repository secret."
+            exit 1
+          fi
+          if [[ -z "$CS_AUTHTOKEN" ]]; then
+            echo "::error::Missing CS_AUTHTOKEN in the GitHub Environment named for this workflow actor."
+            exit 1
+          fi
+          if [[ -z "$GOOGLE_SERVICE_ACCOUNT_JSON" ]]; then
+            echo "::error::Missing GOOGLE_CREDENTIALS or GOOGLE_SERVICE_ACCOUNT_JSON repository secret."
+            exit 1
+          fi
+      - name: Import Google Doc
+        env:
+          CS_API_KEY: ${{ secrets.CS_API_KEY }}
+          CS_AUTHTOKEN: ${{ secrets.CS_AUTHTOKEN }}
+          CS_STACK_UID: ${{ vars.CS_STACK_UID }}
+          CS_CMA_BASE_URL: ${{ vars.CS_CMA_BASE_URL }}
+          CS_PARENT_FOLDER_UID: ${{ vars.CS_PARENT_FOLDER_UID }}
+          GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON || secrets.GOOGLE_CREDENTIALS }}
+          DOC_URL: ${{ inputs.doc_url }}
+          DRY_RUN: ${{ inputs.dry_run }}
+          PUBLISH: ${{ inputs.publish }}
+          CONTENTSTACK_ENVIRONMENT: ${{ inputs.contentstack_environment }}
+        run: |
+          set -euo pipefail
+          args=(--doc "$DOC_URL")
+          if [[ "$DRY_RUN" == "true" ]]; then
+            args+=(--dry-run)
+          else
+            args+=(--apply)
+          fi
+          if [[ "$PUBLISH" == "true" ]]; then
+            args+=(--publish --environment "$CONTENTSTACK_ENVIRONMENT")
+          fi
+          node scripts/import.js "${args[@]}"
+      - name: Upload preview
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: plp-faq-preview
+          path: out/
+          if-no-files-found: ignore
