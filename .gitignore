@@ -3,3 +3,4 @@ out/
 .env
 *.pem
 *service-account*.json
+gen-lang-client-*.json

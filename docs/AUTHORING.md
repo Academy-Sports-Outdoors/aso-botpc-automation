@@ -6,11 +6,14 @@ Use one Google Doc for one PLP. Place these lines before the first FAQ:
 PLP Type: Brand
 PLP URL: /c/brand/example
 Category ID: 12345
+PLP Title: Example Brand PLP | 12345
+Page Name: Example Brand PLP
+Entry Title: Example Brand Pre Footer
 ```
 
 The type can be `Brand`, `L1`, `L2`, or `L3`. Use the type of the Contentstack PLP entry, not the number of path segments in the URL. A full `https://www.academy.com/...` URL is accepted; the importer removes its query string and uses the path. The Category ID must come from the page's source record. The importer does not scrape it from academy.com.
 
-`PLP Title` optionally sets the title of a newly cloned PLP, and its `page` field when that field exists. It does not rename an existing PLP. `Entry Title` optionally sets the dedicated Pre Footer title. Defaults are `Brand PLP | 12345` and `Pre Footer | Brand | 12345` (with the chosen type and ID).
+`PLP Title` sets the `title` of a newly cloned PLP. `Page Name` separately sets its `page` field and must differ from `PLP Title`. `Entry Title` sets the dedicated Pre Footer title. Existing PLPs keep their current title and page name. For a new PLP, `Page Name` is required; the other titles default to `Brand PLP | 12345` and `Pre Footer | Brand | 12345` (with the chosen type and ID).
 
 Example body:
 

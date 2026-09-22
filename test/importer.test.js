@@ -14,7 +14,7 @@ function fakeClient() {
   const schemas = new Map();
   const writes = [];
   for (const [, config] of Object.entries(PLP_TYPES)) {
-    schemas.set(config.contentType, { schema: ['title', 'url', 'category_id', 'footer_components'].map(uid => ({ uid })) });
+    schemas.set(config.contentType, { schema: ['title', 'page', 'url', 'category_id', 'footer_components'].map(uid => ({ uid })) });
     entries.set(`${config.contentType}:${config.templateUid}`, {
       uid: config.templateUid, title: 'Template', url: '/template-plp', category_id: '[Category-ID]', page: 'Template',
       footer_components: [
@@ -58,6 +58,8 @@ test('dry-run planning makes no writes and preserves other footer references', a
   const plan = await planImport(parsed, client);
   assert.equal(client.writes.length, 0);
   assert.equal(plan.summary.plpAction, 'create from template');
+  assert.equal(plan.proposedPlp.title, 'Boys Cleats PLP | 12345');
+  assert.equal(plan.proposedPlp.page, 'Boys Cleats PLP');
   assert.equal(plan.proposedPlp.footer_components[1].feedback[0].uid, 'bltfeedback1');
   assert.equal(plan.proposedPlp.main_components[0].productListingPage200[0].uid, 'blt5314d342aa913deb');
 });
@@ -94,12 +96,32 @@ test('stops when a template lacks the Pre Footer slot', async () => {
 test('selects the declared template for every supported PLP type', async () => {
   for (const type of Object.keys(PLP_TYPES)) {
     const client = fakeClient();
-    const candidate = { ...parsed, type, plpTitle: `${type} PLP | 12345`, entryTitle: `Pre Footer | ${type} | 12345` };
+    const candidate = { ...parsed, type, plpTitle: `${type} PLP | 12345`, pageName: `${type} PLP`, entryTitle: `Pre Footer | ${type} | 12345` };
     const plan = await planImport(candidate, client);
     assert.equal(plan.config.contentType, PLP_TYPES[type].contentType);
     assert.equal(plan.config.templateUid, PLP_TYPES[type].templateUid);
     assert.equal(plan.proposedPlp.category_id, '12345');
   }
+});
+
+test('requires a distinct Page Name only when creating a PLP', async () => {
+  const missing = { ...parsed, pageName: null };
+  await assert.rejects(() => planImport(missing, fakeClient()), /Page Name is required/);
+  const duplicate = { ...parsed, pageName: parsed.plpTitle.toUpperCase() };
+  await assert.rejects(() => planImport(duplicate, fakeClient()), /different from PLP Title/);
+
+  const client = fakeClient();
+  const config = PLP_TYPES.L2;
+  const existing = structuredClone(client.entries.get(`${config.contentType}:${config.templateUid}`));
+  existing.uid = 'bltexistingplp';
+  existing.url = parsed.url;
+  existing.category_id = parsed.categoryId;
+  existing.title = 'Existing title';
+  existing.page = 'Existing page name';
+  client.entries.set(`${config.contentType}:${existing.uid}`, existing);
+  const plan = await planImport(missing, client);
+  assert.equal(plan.proposedPlp.title, 'Existing title');
+  assert.equal(plan.proposedPlp.page, 'Existing page name');
 });
 
 test('creates a dedicated copy when an existing PLP points at an unowned Pre Footer', async () => {

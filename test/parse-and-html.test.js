@@ -11,6 +11,8 @@ test('parses PLP type, normalized path, metadata, and Docs formatting', async ()
   assert.equal(parsed.type, 'L2');
   assert.equal(parsed.url, '/c/kids/boys-cleats');
   assert.equal(parsed.categoryId, '12345');
+  assert.equal(parsed.plpTitle, 'Boys Cleats PLP | 12345');
+  assert.equal(parsed.pageName, 'Boys Cleats PLP');
   const items = await renderFaqs(parsed, () => { throw new Error('unexpected image'); });
   assert.deepEqual(items, [{
     seo_heading: 'How do I choose cleats?',
@@ -26,13 +28,16 @@ test('fails before writing when required Doc metadata or answer is missing', () 
   missingCategory.body.content.splice(2, 1);
   assert.throws(() => parseFaqDoc(missingCategory), /Category ID/);
   const noAnswer = structuredClone(fixture);
-  noAnswer.body.content.length = 4;
+  noAnswer.body.content.length = 6;
   assert.throws(() => parseFaqDoc(noAnswer), /has no answer/);
+  const duplicateNames = structuredClone(fixture);
+  duplicateNames.body.content[4].paragraph.elements[0].textRun.content = 'Page Name: Boys Cleats PLP | 12345\n';
+  assert.throws(() => parseFaqDoc(duplicateNames), /Page Name must be different from PLP Title/);
 });
 
 test('rejects unsafe Doc links and escapes text', async () => {
   const doc = structuredClone(fixture);
-  doc.body.content[4].paragraph.elements = [
+  doc.body.content[6].paragraph.elements = [
     { textRun: { content: '<script>', textStyle: { link: { url: 'javascript:alert(1)' } } } }
   ];
   const items = await renderFaqs(parseFaqDoc(doc), () => {});

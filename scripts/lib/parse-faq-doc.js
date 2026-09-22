@@ -41,7 +41,7 @@ export function normalizePlpUrl(value) {
 
 const META = new Map([
   ['plp type', 'type'], ['plp url', 'url'], ['category id', 'categoryId'],
-  ['plp title', 'plpTitle'], ['entry title', 'entryTitle']
+  ['plp title', 'plpTitle'], ['page name', 'pageName'], ['entry title', 'entryTitle']
 ]);
 
 export function parseFaqDoc(doc) {
@@ -81,6 +81,11 @@ export function parseFaqDoc(doc) {
   if (!metadata.url) throw new Error('PLP URL is required.');
   if (!metadata.categoryId) throw new Error('Category ID is required.');
   if (!/^[A-Za-z0-9_-]+$/.test(metadata.categoryId)) throw new Error('Category ID contains invalid characters.');
+  const plpTitle = metadata.plpTitle || `${type} PLP | ${metadata.categoryId}`;
+  const pageName = metadata.pageName || null;
+  if (pageName?.localeCompare(plpTitle, undefined, { sensitivity: 'accent' }) === 0) {
+    throw new Error('Page Name must be different from PLP Title.');
+  }
   if (!faqs.length) throw new Error('At least one Heading 1 or FAQ: section is required.');
   for (const faq of faqs) {
     if (!faq.blocks.some(block => block.table || block.paragraph?.elements?.some(el => el.textRun?.content?.trim() || el.inlineObjectElement))) {
@@ -90,7 +95,7 @@ export function parseFaqDoc(doc) {
   return {
     docTitle: doc.title || '',
     type, url: normalizePlpUrl(metadata.url), categoryId: metadata.categoryId,
-    plpTitle: metadata.plpTitle || `${type} PLP | ${metadata.categoryId}`,
+    plpTitle, pageName,
     entryTitle: metadata.entryTitle || `Pre Footer | ${type} | ${metadata.categoryId}`,
     faqs,
     inlineObjects: data.inlineObjects || {},

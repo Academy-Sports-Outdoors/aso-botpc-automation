@@ -14,12 +14,15 @@ PLP URL: https://www.academy.com/c/kids/kids-shoes/boys-footwear/boys-cleats
 Category ID: 12345
 ```
 
-Optional fields:
+Naming fields (`Page Name` is required only when the PLP must be created):
 
 ```text
-PLP Title: Boys Cleats PLP
+PLP Title: Boys Cleats PLP | 12345
+Page Name: Boys Cleats PLP
 Entry Title: Boys Cleats Pre Footer
 ```
+
+`PLP Title` maps to the PLP entry's `title`; `Page Name` maps separately to its `page` field; `Entry Title` names the dedicated Pre Footer. For an existing PLP, the importer preserves its current title and page name. If no matching PLP exists, `Page Name` is required and must differ from `PLP Title`; `PLP Title` and `Entry Title` otherwise have generated defaults.
 
 Use **Heading 1** for each FAQ question or section title. Put its answer below it as normal paragraphs. Bulleted and numbered lists, links, bold, italic, Heading 2/3, tables, and inline images are supported. `FAQ: Your question` on a normal line also starts a section. The importer replaces the Pre Footer's entire `seo_content` with the sections in the Doc.
 

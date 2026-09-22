@@ -9,7 +9,7 @@ const unique = entries => [...new Map(entries.map(entry => [entry.uid, entry])).
 
 function assertSchema(contentType, type) {
   const fields = new Set((contentType?.schema || []).map(field => field.uid));
-  for (const uid of ['url', 'category_id', 'footer_components', 'title']) {
+  for (const uid of ['url', 'category_id', 'footer_components', 'title', 'page']) {
     if (!fields.has(uid)) throw new Error(`${type} schema is missing required field "${uid}". Inspect this page type before importing.`);
   }
 }
@@ -64,10 +64,14 @@ export async function planImport(parsed, client) {
   }
   const proposedPlp = plp ? stripSystemFields(plp) : stripSystemFields(template, { clone: true });
   if (!plp) {
+    if (!parsed.pageName) throw new Error('Page Name is required when creating a new PLP.');
+    if (parsed.pageName.localeCompare(parsed.plpTitle, undefined, { sensitivity: 'accent' }) === 0) {
+      throw new Error('Page Name must be different from PLP Title.');
+    }
     proposedPlp.title = parsed.plpTitle;
     proposedPlp.url = parsed.url;
     proposedPlp.category_id = parsed.categoryId;
-    if ('page' in proposedPlp) proposedPlp.page = parsed.plpTitle;
+    proposedPlp.page = parsed.pageName;
   }
   proposedPlp.footer_components = attachPrefooter(proposedPlp.footer_components || [], template.footer_components, prefooter?.uid || 'blt0000000000000000');
   return {

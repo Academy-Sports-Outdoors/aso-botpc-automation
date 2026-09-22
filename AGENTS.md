@@ -43,7 +43,7 @@ PLP URL: /c/kids/kids-shoes/boys-footwear/boys-cleats
 Category ID: 12345
 ```
 
-Optional: `PLP Title` for a newly cloned PLP and `Entry Title` for the dedicated Pre Footer. One Doc per PLP. Use Heading 1 for each FAQ; `FAQ: ...` is a fallback. Normal paragraphs, lists, links, bold, italic, tables, inline images, and Heading 2/3 are converted to safe HTML.
+Optional for an existing PLP: `PLP Title`, `Page Name`, and `Entry Title`. For a newly cloned PLP, `Page Name` is required and must differ from `PLP Title`. Map `PLP Title` only to the PLP `title`, `Page Name` only to the PLP `page`, and `Entry Title` to the dedicated Pre Footer `title`. Never rename an existing PLP from Doc metadata. One Doc per PLP. Use Heading 1 for each FAQ; `FAQ: ...` is a fallback. Normal paragraphs, lists, links, bold, italic, tables, inline images, and Heading 2/3 are converted to safe HTML.
 
 Stop without Contentstack writes on missing/unsupported type, missing URL/Category ID, malformed Doc, or zero FAQs. A dry run may read Contentstack but must never create/update/publish entries or assets. No browser scraping or Playwright/Puppeteer. The Category ID comes from the Doc.
 
