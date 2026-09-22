@@ -1,5 +1,13 @@
 # AGENTS.md — Academy PLP Pre Footer FAQ importer
 
+## Repository of record
+
+This checkout at `/Users/A0800955/Documents/GitHub/aso-botpc-automation` is the active repository for this project. Its `origin` is `https://github.com/Academy-Sports-Outdoors/aso-botpc-automation.git`. The sibling `../aso-botpc` checkout is the original development copy and is no longer the working repository. The user referred to `../aso-botpc-autoomation`, but the actual cloned directory is `../aso-botpc-automation`. Start future agent sessions here, and make all code, workflow, documentation, and test changes here. Do not silently sync from or edit the old checkout.
+
+Run `npm ci` and `npm test` here before committing code changes. Commit and push from this checkout when authorized; GitHub Actions runs the pushed workflow and code, not local uncommitted files. Keep credentials out of the repository. For operator setup and use, follow [README.md](README.md) and [docs/AUTHORING.md](docs/AUTHORING.md).
+
+The organization repository is currently public. Its workflow uploads `out/preview.html`, `out/payload.json`, and `out/report.json` as an artifact; these can contain unpublished FAQ copy. Check repository visibility and artifact access before importing confidential Docs. Never put credentials in Doc content, preview files, commits, or logs.
+
 ## Mission
 
 Import bottom of page FAQ content from one Google Doc per Academy PLP. The Doc explicitly declares `PLP Type`, `PLP URL`, and `Category ID`. Supported PLP types are Brand, L1, L2, and L3. Each PLP gets its own `preFooter200` cloned from the Pre Footer template. Later imports update the same importer-owned Pre Footer. Save drafts by default; publish only with explicit flags and an existing environment.
