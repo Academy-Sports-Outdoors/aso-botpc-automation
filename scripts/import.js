@@ -73,7 +73,7 @@ async function main() {
   if (plan) console.log(JSON.stringify(plan.summary, null, 2));
   else console.log('Offline preview: Contentstack targets could not be resolved without CS_API_KEY and CS_AUTHTOKEN.');
   if (args.dryRun) {
-    await writeSummary(['### PLP FAQ dry run', `- PLP: ${parsed.type} ${parsed.url}`, `- FAQs: ${parsed.faqs.length}`, `- Target resolution: ${plan ? plan.summary.plpAction : 'offline preview'}`]);
+    await writeSummary(['### Import Summary', '- Mode: preview only (no Contentstack writes)', `- PLP: ${parsed.type} ${parsed.url}`, `- FAQs: ${parsed.faqs.length}`, `- Target resolution: ${plan ? plan.summary.plpAction : 'offline preview'}`]);
     return;
   }
   const result = await applyImport(plan, parsed, client, {
@@ -84,7 +84,7 @@ async function main() {
     onProgress: message => console.log(message)
   });
   console.log(JSON.stringify(result, null, 2));
-  await writeSummary(['### PLP FAQ import', `- PLP: ${result.plp.editUrl}`, `- Pre Footer: ${result.prefooter.editUrl}`, `- Mode: ${args.publish ? `published to ${environments.join(', ')}` : 'draft only'}`]);
+  await writeSummary(['### Import Summary', `- PLP: ${result.plp.editUrl}`, `- Pre Footer: ${result.prefooter.editUrl}`, `- Mode: ${args.publish ? `published to ${environments.join(', ')}` : 'draft only'}`]);
 }
 
 main().catch(error => { console.error(`Import failed: ${error.message}`); process.exitCode = 1; });

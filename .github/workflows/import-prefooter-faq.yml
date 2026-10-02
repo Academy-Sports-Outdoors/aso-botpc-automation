@@ -91,9 +91,16 @@ jobs:
           esac
           node scripts/import.js "${args[@]}"
       - name: Upload preview
+        id: upload-preview
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: plp-faq-preview
           path: out/
           if-no-files-found: ignore
+      - name: Link preview artifact in summary
+        if: always() && inputs.mode == 'Preview Only' && steps.upload-preview.outputs.artifact-url != ''
+        env:
+          ARTIFACT_URL: ${{ steps.upload-preview.outputs.artifact-url }}
+        run: |
+          echo "- Preview artifact: [plp-faq-preview]($ARTIFACT_URL)" >> "$GITHUB_STEP_SUMMARY"
