@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 import { readFile, mkdir, writeFile, appendFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
-import { ContentstackClient } from './lib/contentstack.js';
+import { ContentstackClient, editUrl } from './lib/contentstack.js';
+import { PREFOOTER_TYPE } from './lib/config.js';
 import { getGoogleDoc, docIdFromInput } from './lib/google-docs.js';
 import { parseFaqDoc } from './lib/parse-faq-doc.js';
 import { renderFaqs, previewHtml } from './lib/html-from-docs.js';
@@ -46,6 +47,28 @@ async function writeSummary(lines) {
   if (process.env.GITHUB_STEP_SUMMARY) await appendFile(process.env.GITHUB_STEP_SUMMARY, `${lines.join('\n')}\n`);
 }
 
+function summaryLines({ args, parsed, plan, environments, result }) {
+  const applied = Boolean(result);
+  const mode = args.dryRun ? 'Preview Only (no Contentstack writes)'
+    : args.publish ? `CS Publish to ${environments.join(', ')}` : 'CS Draft';
+  const link = (label, type, uid) => uid ? `[${label}](${editUrl(type, uid)})` : null;
+  const lines = ['### Import Summary', `- Mode: ${mode}`, `- PLP: ${parsed.type} ${parsed.url}`, `- Category ID: ${parsed.categoryId}`, `- FAQs: ${parsed.faqs.length}`];
+  if (!plan) {
+    lines.push('- Target resolution: offline preview (Contentstack not checked)');
+    return lines;
+  }
+  const plpUid = result?.plp.uid || plan.summary.plpUid;
+  const prefooterUid = result?.prefooter.uid || plan.summary.prefooterUid;
+  const plpAction = plan.plp ? (applied ? 'updated existing PLP' : 'will update existing PLP') : (applied ? 'created from template' : 'will be created from template');
+  const prefooterAction = plan.prefooter ? (applied ? 'updated dedicated Pre Footer' : 'will update dedicated Pre Footer') : (applied ? 'created from template' : 'will be created from template');
+  lines.push(`- PLP entry: ${[plpAction, link('Open in Contentstack', plan.config.contentType, plpUid)].filter(Boolean).join(' · ')}`);
+  lines.push(`- Pre Footer: ${[prefooterAction, link('Open in Contentstack', PREFOOTER_TYPE, prefooterUid)].filter(Boolean).join(' · ')}`);
+  if (plan.summary.replacedPrefooterUid) {
+    lines.push(`- Replaced Pre Footer reference: ${link(plan.summary.replacedPrefooterUid, PREFOOTER_TYPE, plan.summary.replacedPrefooterUid)} (not deleted)`);
+  }
+  return lines;
+}
+
 async function main() {
   const args = argsFrom(process.argv.slice(2));
   if (args.help) { console.log(usage()); return; }
@@ -73,7 +96,7 @@ async function main() {
   if (plan) console.log(JSON.stringify(plan.summary, null, 2));
   else console.log('Offline preview: Contentstack targets could not be resolved without CS_API_KEY and CS_AUTHTOKEN.');
   if (args.dryRun) {
-    await writeSummary(['### Import Summary', '- Mode: preview only (no Contentstack writes)', `- PLP: ${parsed.type} ${parsed.url}`, `- FAQs: ${parsed.faqs.length}`, `- Target resolution: ${plan ? plan.summary.plpAction : 'offline preview'}`]);
+    await writeSummary(summaryLines({ args, parsed, plan, environments }));
     return;
   }
   const result = await applyImport(plan, parsed, client, {
@@ -84,7 +107,7 @@ async function main() {
     onProgress: message => console.log(message)
   });
   console.log(JSON.stringify(result, null, 2));
-  await writeSummary(['### Import Summary', `- PLP: ${result.plp.editUrl}`, `- Pre Footer: ${result.prefooter.editUrl}`, `- Mode: ${args.publish ? `published to ${environments.join(', ')}` : 'draft only'}`]);
+  await writeSummary(summaryLines({ args, parsed, plan, environments, result }));
 }
 
 main().catch(error => { console.error(`Import failed: ${error.message}`); process.exitCode = 1; });
