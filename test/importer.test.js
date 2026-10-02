@@ -47,7 +47,7 @@ function fakeClient() {
       return result;
     },
     async queryAssets() { return []; },
-    async validateEnvironment() { return 'development'; },
+    async validateEnvironments() { return ['development']; },
     async publishEntry(type, uid) { writes.push({ method: 'PUBLISH', type, uid }); },
     async waitForEntryPublication(type, uid) { writes.push({ method: 'CONFIRM', type, uid }); }
   };
@@ -156,10 +156,24 @@ test('does not overwrite a Pre Footer changed after planning', async () => {
 test('confirms Pre Footer publication before updating or publishing the PLP', async () => {
   const client = fakeClient();
   const plan = await planImport(parsed, client);
-  await applyImport(plan, parsed, client, { publish: true, environment: 'development' });
+  await applyImport(plan, parsed, client, { publish: true, environments: ['development'] });
   assert.deepEqual(client.writes.map(write => `${write.method}:${write.type}`), [
     'POST:preFooter200', 'PUBLISH:preFooter200', 'CONFIRM:preFooter200',
     'POST:l2CategoryPlpPage', 'PUBLISH:l2CategoryPlpPage', 'CONFIRM:l2CategoryPlpPage'
+  ]);
+});
+
+test('publishes to every environment and confirms each before updating the PLP', async () => {
+  const client = fakeClient();
+  client.publishEntry = async (type, uid, version, environments) => client.writes.push({ method: 'PUBLISH', type, environments });
+  client.waitForEntryPublication = async (type, uid, version, environment) => client.writes.push({ method: 'CONFIRM', type, environment });
+  const plan = await planImport(parsed, client);
+  await applyImport(plan, parsed, client, { publish: true, environments: ['development', 'production'] });
+  assert.deepEqual(client.writes.map(write => [write.method, write.type, write.environments?.join('+') || write.environment].filter(Boolean).join(':')), [
+    'POST:preFooter200', 'PUBLISH:preFooter200:development+production',
+    'CONFIRM:preFooter200:development', 'CONFIRM:preFooter200:production',
+    'POST:l2CategoryPlpPage', 'PUBLISH:l2CategoryPlpPage:development+production',
+    'CONFIRM:l2CategoryPlpPage:development', 'CONFIRM:l2CategoryPlpPage:production'
   ]);
 });
 
@@ -179,7 +193,7 @@ test('uploads and confirms an inline image before publishing entries', async () 
   const fetchImpl = async () => new Response(new Uint8Array([137, 80, 78, 71]), { status: 200, headers: { 'content-type': 'image/png' } });
   const plan = await planImport(withImage, client);
   await applyImport(plan, withImage, client, {
-    publish: true, environment: 'development', docId: 'test-doc', googleToken: 'test-token', fetchImpl
+    publish: true, environments: ['development'], docId: 'test-doc', googleToken: 'test-token', fetchImpl
   });
   assert.deepEqual(client.writes.slice(0, 6).map(write => `${write.method}:${write.type}`), [
     'UPLOAD:asset', 'PUBLISH:asset', 'CONFIRM:asset',

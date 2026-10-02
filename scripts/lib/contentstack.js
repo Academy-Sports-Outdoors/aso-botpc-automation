@@ -103,26 +103,31 @@ export class ContentstackClient {
     return result.assets || [];
   }
 
-  async publishEntry(type, uid, version, environment) {
-    if (!environment) throw new Error('A publish environment is required.');
+  async publishEntry(type, uid, version, environments) {
+    if (!environments?.length) throw new Error('A publish environment is required.');
     if (!Number.isInteger(version)) throw new Error(`Missing version for ${type} ${uid}.`);
     return this.request('POST', `${this.entryPath(type, uid)}/publish`, {
-      body: { entry: { environments: [environment], locales: [LOCALE] }, locale: LOCALE, version }
+      body: { entry: { environments, locales: [LOCALE] }, locale: LOCALE, version }
     });
   }
 
-  async publishAsset(uid, version, environment) {
+  async publishAsset(uid, version, environments) {
+    if (!environments?.length) throw new Error('A publish environment is required.');
     if (!Number.isInteger(version)) throw new Error(`Missing version for asset ${uid}.`);
     return this.request('POST', `/assets/${encodeURIComponent(uid)}/publish`, {
-      body: { asset: { environments: [environment], locales: [LOCALE] }, version }
+      body: { asset: { environments, locales: [LOCALE] }, version }
     });
   }
 
-  async validateEnvironment(value) {
+  async validateEnvironments(values) {
+    if (!values?.length) throw new Error('A publish environment is required.');
     const result = await this.request('GET', '/environments?include_count=true');
-    const match = (result.environments || []).find(item => item.uid === value || item.name === value);
-    if (!match) throw new Error(`Publish environment "${value}" does not exist in this stack.`);
-    return match.name;
+    const names = values.map(value => {
+      const match = (result.environments || []).find(item => item.uid === value || item.name === value);
+      if (!match) throw new Error(`Publish environment "${value}" does not exist in this stack.`);
+      return match.name;
+    });
+    return [...new Set(names)];
   }
 
   async waitForEntryPublication(type, uid, version, environment) {

@@ -52,7 +52,7 @@ test('renders a native Docs table and escapes its cell text', async () => {
     { content: [{ paragraph: { elements: [{ textRun: { content: 'Small\n' } }] } }] }
   ] }] } });
   const items = await renderFaqs(parseFaqDoc(doc), () => {});
-  assert.match(items[0].seo_body, /<table><tbody><tr><td><p>Size &lt; 5<\/p><\/td><td><p>Small<\/p><\/td><\/tr><\/tbody><\/table>/);
+  assert.match(items[0].seo_body, /<table style="border-collapse:collapse"><tbody><tr><td style="border:1px solid #333333"><p>Size &lt; 5<\/p><\/td><td style="border:1px solid #333333"><p>Small<\/p><\/td><\/tr><\/tbody><\/table>/);
 });
 
 test('reads lists and inline images from Google Docs tab content', async () => {

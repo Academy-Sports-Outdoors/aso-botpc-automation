@@ -7,18 +7,17 @@ on:
         description: Google Doc URL or ID
         required: true
         type: string
-      dry_run:
-        description: Preview only (no Contentstack writes)
+      mode:
+        description: What to do with the Doc
         required: true
-        default: true
-        type: boolean
-      publish:
-        description: Publish entries after import
-        required: true
-        default: false
-        type: boolean
+        default: preview
+        type: choice
+        options:
+          - preview
+          - draft
+          - publish
       contentstack_environment:
-        description: Contentstack publish environment name or UID (required only when publishing)
+        description: Contentstack publish environment names or UIDs, comma-separated (required only when publishing)
         required: false
         type: string
 
@@ -70,20 +69,26 @@ jobs:
           CS_PARENT_FOLDER_UID: ${{ vars.CS_PARENT_FOLDER_UID }}
           GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON || secrets.GOOGLE_CREDENTIALS }}
           DOC_URL: ${{ inputs.doc_url }}
-          DRY_RUN: ${{ inputs.dry_run }}
-          PUBLISH: ${{ inputs.publish }}
+          MODE: ${{ inputs.mode }}
           CONTENTSTACK_ENVIRONMENT: ${{ inputs.contentstack_environment }}
         run: |
           set -euo pipefail
           args=(--doc "$DOC_URL")
-          if [[ "$DRY_RUN" == "true" ]]; then
-            args+=(--dry-run)
-          else
-            args+=(--apply)
-          fi
-          if [[ "$PUBLISH" == "true" ]]; then
-            args+=(--publish --environment "$CONTENTSTACK_ENVIRONMENT")
-          fi
+          case "$MODE" in
+            preview) args+=(--dry-run) ;;
+            draft) args+=(--apply) ;;
+            publish)
+              if [[ -z "${CONTENTSTACK_ENVIRONMENT//[[:space:],]/}" ]]; then
+                echo "::error::Publish mode requires contentstack_environment."
+                exit 1
+              fi
+              args+=(--apply --publish --environment "$CONTENTSTACK_ENVIRONMENT")
+              ;;
+            *)
+              echo "::error::Unknown mode: $MODE"
+              exit 1
+              ;;
+          esac
           node scripts/import.js "${args[@]}"
       - name: Upload preview
         if: always()

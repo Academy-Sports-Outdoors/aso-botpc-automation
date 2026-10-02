@@ -128,8 +128,8 @@ export function changeReport(plan, parsed, seoContent) {
   };
 }
 
-export async function applyImport(plan, parsed, client, { docId, googleToken, environment, publish = false, fetchImpl = fetch, assetFolderUid, onProgress = () => {} } = {}) {
-  if (publish && !environment) throw new Error('Publishing requires a verified environment.');
+export async function applyImport(plan, parsed, client, { docId, googleToken, environments = [], publish = false, fetchImpl = fetch, assetFolderUid, onProgress = () => {} } = {}) {
+  if (publish && !environments.length) throw new Error('Publishing requires at least one verified environment.');
   const assets = [];
   const imageResolver = async ({ id, uri, alt }) => {
     const filenameBase = `plp-faq-${docId || 'fixture'}-${id}`.replace(/[^A-Za-z0-9_-]/g, '-');
@@ -146,8 +146,8 @@ export async function applyImport(plan, parsed, client, { docId, googleToken, en
   const seoContent = await renderFaqs(parsed, imageResolver);
   if (publish) {
     for (const asset of unique(assets)) {
-      await client.publishAsset(asset.uid, asset._version, environment);
-      await client.waitForAssetPublication(asset.uid, asset._version, environment);
+      await client.publishAsset(asset.uid, asset._version, environments);
+      for (const environment of environments) await client.waitForAssetPublication(asset.uid, asset._version, environment);
     }
   }
   const prefooterBody = prefooterPayload(plan, parsed, seoContent);
@@ -157,8 +157,8 @@ export async function applyImport(plan, parsed, client, { docId, googleToken, en
     : await client.createEntry(PREFOOTER_TYPE, prefooterBody);
   onProgress(`Pre Footer draft: ${editUrl(PREFOOTER_TYPE, prefooter.uid)}`);
   if (publish) {
-    await client.publishEntry(PREFOOTER_TYPE, prefooter.uid, prefooter._version, environment);
-    await client.waitForEntryPublication(PREFOOTER_TYPE, prefooter.uid, prefooter._version, environment);
+    await client.publishEntry(PREFOOTER_TYPE, prefooter.uid, prefooter._version, environments);
+    for (const environment of environments) await client.waitForEntryPublication(PREFOOTER_TYPE, prefooter.uid, prefooter._version, environment);
   }
   const plpBody = structuredClone(plan.proposedPlp);
   plpBody.footer_components = attachPrefooter(plpBody.footer_components, plan.template.footer_components, prefooter.uid);
@@ -168,8 +168,8 @@ export async function applyImport(plan, parsed, client, { docId, googleToken, en
     : await client.createEntry(plan.config.contentType, plpBody);
   onProgress(`PLP draft: ${editUrl(plan.config.contentType, plp.uid)}`);
   if (publish) {
-    await client.publishEntry(plan.config.contentType, plp.uid, plp._version, environment);
-    await client.waitForEntryPublication(plan.config.contentType, plp.uid, plp._version, environment);
+    await client.publishEntry(plan.config.contentType, plp.uid, plp._version, environments);
+    for (const environment of environments) await client.waitForEntryPublication(plan.config.contentType, plp.uid, plp._version, environment);
   }
   return {
     plp: { uid: plp.uid, editUrl: editUrl(plan.config.contentType, plp.uid) },

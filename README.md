@@ -61,13 +61,14 @@ Review the preview and payload, then save drafts:
 node scripts/import.js --doc 'https://docs.google.com/document/d/DOC_ID/edit' --apply
 ```
 
-Publishing is opt-in. Confirm the target environment first; the importer checks that its name or UID exists in the stack before writing:
+Publishing is opt-in. Confirm the target environments first; the importer checks that each name or UID exists in the stack before writing. Separate multiple environments with commas (or repeat `--environment`):
 
 ```bash
 node scripts/import.js --doc 'https://docs.google.com/document/d/DOC_ID/edit' --apply --publish --environment development
+node scripts/import.js --doc 'https://docs.google.com/document/d/DOC_ID/edit' --apply --publish --environment development,production
 ```
 
-The importer uploads and publishes images first, then publishes the Pre Footer, attaches it to the PLP, and publishes the PLP. Publishing an existing PLP entry can also release other pending draft edits on that entry, so review it before choosing `--publish`.
+The importer uploads and publishes images first, then publishes the Pre Footer, attaches it to the PLP, and publishes the PLP. Each step publishes to all requested environments and waits until every environment shows the new version before continuing. Publishing an existing PLP entry can also release other pending draft edits on that entry, so review it before choosing `--publish`.
 
 For a preview from a saved Google Docs API response without Google credentials:
 
@@ -79,7 +80,7 @@ This fixture mode is intended for offline preview and tests.
 
 ## GitHub Actions
 
-Run **Import PLP Pre Footer FAQ** from the Actions tab. Enter the Doc URL. `dry_run` defaults to true and `publish` defaults to false. For a draft import, set `dry_run` to false. For publication, also set `publish` to true and provide `contentstack_environment` (a Contentstack name or UID). The workflow runs tests, serializes imports to avoid overlapping updates, uploads the preview files, and writes the edit links to the job summary.
+Run **Import PLP Pre Footer FAQ** from the Actions tab. Enter the Doc URL and pick a `mode`: `preview` (the default) reads Contentstack but writes nothing, `draft` creates or updates drafts, and `publish` also publishes. For `publish`, provide `contentstack_environment` (one or more Contentstack environment names or UIDs, comma-separated, for example `development,production`). The workflow runs tests, serializes imports to avoid overlapping updates, uploads the preview files, and writes the edit links to the job summary.
 
 This workflow follows the `web-builder` credential layout. **The GitHub Environment is the triggering user's GitHub username** (`github.actor`); it controls access to that user's Contentstack token. `contentstack_environment` is a separate workflow input used only when publishing Contentstack entries.
 

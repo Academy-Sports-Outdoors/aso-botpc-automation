@@ -11,20 +11,23 @@ function usage() {
   return `Usage:
   node scripts/import.js --doc <Google Doc URL or ID> [--dry-run] [--out out]
   node scripts/import.js --doc <Google Doc URL or ID> --apply
-  node scripts/import.js --doc <Google Doc URL or ID> --apply --publish --environment <name or UID>
+  node scripts/import.js --doc <Google Doc URL or ID> --apply --publish --environment <name or UID>[,<name or UID>...]
   node scripts/import.js --doc-json <local Docs API JSON> --dry-run
 
-Dry-run is the default. --apply creates or updates drafts. --publish also requires --apply.`;
+Dry-run is the default. --apply creates or updates drafts. --publish also requires --apply.
+--environment accepts a comma-separated list and may be repeated to publish to several environments.`;
 }
 
 function argsFrom(argv) {
-  const args = { dryRun: true, out: 'out' };
+  const args = { dryRun: true, out: 'out', environments: [] };
   const values = new Set(['--doc', '--doc-json', '--out', '--environment']);
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
     if (values.has(arg)) {
       if (!argv[i + 1] || argv[i + 1].startsWith('--')) throw new Error(`${arg} requires a value.`);
-      args[{ '--doc': 'doc', '--doc-json': 'docJson', '--out': 'out', '--environment': 'environment' }[arg]] = argv[++i];
+      const value = argv[++i];
+      if (arg === '--environment') args.environments.push(...value.split(',').map(item => item.trim()).filter(Boolean));
+      else args[{ '--doc': 'doc', '--doc-json': 'docJson', '--out': 'out' }[arg]] = value;
     } else if (arg === '--apply') args.dryRun = false;
     else if (arg === '--dry-run') args.dryRun = true;
     else if (arg === '--publish') args.publish = true;
@@ -34,7 +37,7 @@ function argsFrom(argv) {
   if (args.help) return args;
   if (Boolean(args.doc) === Boolean(args.docJson)) throw new Error('Provide exactly one of --doc or --doc-json.');
   if (args.publish && args.dryRun) throw new Error('--publish requires --apply.');
-  if (args.publish && !args.environment) throw new Error('--publish requires --environment.');
+  if (args.publish && !args.environments.length) throw new Error('--publish requires --environment.');
   if (args.docJson && !args.dryRun) throw new Error('--doc-json is for dry-run previews only.');
   return args;
 }
@@ -54,8 +57,8 @@ async function main() {
   if (!args.dryRun && !hasCmaCredentials) throw new Error('CS_API_KEY and CS_AUTHTOKEN are required for --apply.');
   const client = hasCmaCredentials ? new ContentstackClient() : null;
   const plan = client ? await planImport(parsed, client) : null;
-  let environment;
-  if (args.publish) environment = await client.validateEnvironment(args.environment);
+  let environments = [];
+  if (args.publish) environments = await client.validateEnvironments(args.environments);
   const previewContent = await renderFaqs(parsed, ({ id }) => Promise.resolve(`https://preview.invalid/images/${encodeURIComponent(id)}`));
   const output = resolve(args.out);
   await mkdir(output, { recursive: true });
@@ -76,12 +79,12 @@ async function main() {
   const result = await applyImport(plan, parsed, client, {
     docId: args.doc ? docIdFromInput(args.doc) : source.id,
     googleToken: source.token,
-    environment, publish: Boolean(args.publish),
+    environments, publish: Boolean(args.publish),
     assetFolderUid: process.env.CS_PARENT_FOLDER_UID,
     onProgress: message => console.log(message)
   });
   console.log(JSON.stringify(result, null, 2));
-  await writeSummary(['### PLP FAQ import', `- PLP: ${result.plp.editUrl}`, `- Pre Footer: ${result.prefooter.editUrl}`, `- Mode: ${args.publish ? `published to ${environment}` : 'draft only'}`]);
+  await writeSummary(['### PLP FAQ import', `- PLP: ${result.plp.editUrl}`, `- Pre Footer: ${result.prefooter.editUrl}`, `- Mode: ${args.publish ? `published to ${environments.join(', ')}` : 'draft only'}`]);
 }
 
 main().catch(error => { console.error(`Import failed: ${error.message}`); process.exitCode = 1; });
