@@ -80,7 +80,7 @@ This fixture mode is intended for offline preview and tests.
 
 ## GitHub Actions
 
-Run **Import PLP Pre Footer FAQ** from the Actions tab. Enter the Doc URL and pick a `mode`: `preview` (the default) reads Contentstack but writes nothing, `draft` creates or updates drafts, and `publish` also publishes. For `publish`, provide `contentstack_environment` (one or more Contentstack environment names or UIDs, comma-separated, for example `development,production`). The workflow runs tests, serializes imports to avoid overlapping updates, uploads the preview files, and writes the edit links to the job summary.
+Run **Import PLP Pre Footer FAQ** from the Actions tab. Enter the Doc URL and pick an **Import mode**: **Preview Only** (the default) builds the preview files and reads Contentstack but writes nothing, **CS Draft** creates or updates Contentstack drafts, and **CS Publish** also publishes. For **CS Publish**, provide `contentstack_environment` (one or more Contentstack environment names or UIDs, comma-separated, for example `development,production`). The workflow runs tests, serializes imports to avoid overlapping updates, uploads the preview files, and writes the edit links to the job summary.
 
 This workflow follows the `web-builder` credential layout. **The GitHub Environment is the triggering user's GitHub username** (`github.actor`); it controls access to that user's Contentstack token. `contentstack_environment` is a separate workflow input used only when publishing Contentstack entries.
 

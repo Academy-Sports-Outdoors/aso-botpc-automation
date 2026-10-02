@@ -8,14 +8,14 @@ on:
         required: true
         type: string
       mode:
-        description: What to do with the Doc
+        description: Import mode
         required: true
-        default: preview
+        default: Preview Only
         type: choice
         options:
-          - preview
-          - draft
-          - publish
+          - Preview Only
+          - CS Draft
+          - CS Publish
       contentstack_environment:
         description: Contentstack publish environment names or UIDs, comma-separated (required only when publishing)
         required: false
@@ -75,11 +75,11 @@ jobs:
           set -euo pipefail
           args=(--doc "$DOC_URL")
           case "$MODE" in
-            preview) args+=(--dry-run) ;;
-            draft) args+=(--apply) ;;
-            publish)
+            "Preview Only") args+=(--dry-run) ;;
+            "CS Draft") args+=(--apply) ;;
+            "CS Publish")
               if [[ -z "${CONTENTSTACK_ENVIRONMENT//[[:space:],]/}" ]]; then
-                echo "::error::Publish mode requires contentstack_environment."
+                echo "::error::CS Publish mode requires contentstack_environment."
                 exit 1
               fi
               args+=(--apply --publish --environment "$CONTENTSTACK_ENVIRONMENT")
