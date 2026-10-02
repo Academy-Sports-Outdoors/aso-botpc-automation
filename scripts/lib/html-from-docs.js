@@ -51,7 +51,7 @@ async function renderTable(table, context) {
     const cells = [];
     for (const cell of row.tableCells || []) {
       const body = await renderBlocks(cell.content || [], context);
-      cells.push(`<td style="border:1px solid #333333">${body}</td>`);
+      cells.push(`<td style="border:1px solid #333333;border-color:#333333;padding:5px">${body}</td>`);
     }
     rows.push(`<tr>${cells.join('')}</tr>`);
   }
@@ -118,5 +118,5 @@ export async function renderFaqs(parsed, imageResolver) {
 
 export function previewHtml(parsed, seoContent) {
   const sections = seoContent.map(item => `<details><summary>${escapeText(item.seo_heading)}</summary>${item.seo_body}</details>`).join('\n');
-  return `<!doctype html><html lang="en"><meta charset="utf-8"><title>${escapeText(parsed.plpTitle)} FAQ preview</title><style>body{font:16px/1.5 system-ui;max-width:800px;margin:3rem auto;padding:0 1rem}details{border-block-start:1px solid #ddd;padding:1rem}summary{font-weight:700;cursor:pointer}img{max-width:100%}table{border-collapse:collapse}td{padding:.5rem}</style><h1>${escapeText(parsed.plpTitle)}</h1>${sections}</html>`;
+  return `<!doctype html><html lang="en"><meta charset="utf-8"><title>${escapeText(parsed.plpTitle)} FAQ preview</title><style>body{font:16px/1.5 system-ui;max-width:800px;margin:3rem auto;padding:0 1rem}details{border-block-start:1px solid #ddd;padding:1rem}summary{font-weight:700;cursor:pointer}img{max-width:100%}table{border-collapse:collapse}</style><h1>${escapeText(parsed.plpTitle)}</h1>${sections}</html>`;
 }
